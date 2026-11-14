@@ -1,0 +1,3 @@
+{"grp": "g", "txn_id": "a", "ts": 10, "amount": 5, "note": "first of the tie"}
+{"grp": "g", "txn_id": "b", "ts": 10, "amount": null, "note": "tied, null value still counts"}
+{"grp": "g", "txn_id": "c", "ts": 12, "amount": -2, "nested": {"keep": true, "big": 9007199254740993}}

@@ -31,6 +31,17 @@ from .errors import (
     SeqConflict,
     SequenceGap,
 )
+from .windowing import (
+    WindowConfig,
+    WindowDeclaration,
+    WindowDeclarationError,
+    WindowError,
+    WindowInputError,
+    WindowJobStats,
+    WindowSpec,
+    load_declaration,
+    run_window_job,
+)
 
 __all__ = [
     "SubmitResult",
@@ -46,6 +57,15 @@ __all__ = [
     "SequenceGap",
     "SeqConflict",
     "DatabaseError",
+    "WindowConfig",
+    "WindowDeclaration",
+    "WindowDeclarationError",
+    "WindowError",
+    "WindowInputError",
+    "WindowJobStats",
+    "WindowSpec",
+    "load_declaration",
+    "run_window_job",
 ]
 
 __version__ = "0.1.0"

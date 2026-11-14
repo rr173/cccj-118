@@ -85,6 +85,55 @@ print(query_summary("analytics.db"))
 print(query_base("analytics.db"))
 ```
 
+## Offline row-level windows (`distagg.windowing`)
+
+The aggregation engine only keeps group totals, so it cannot answer row-level
+questions such as "the other rows before, at and after this record".  The
+`window` subcommand is a separate **offline, one-shot** processor: it takes a
+shuffled UTF-8 JSONL stream and a declaration and writes a new JSONL stream
+with the same row count and source order, each row carrying a `computed`
+object (`row_number`, `rank`, `dense_rank`, `lag`/`lead`, and one metric block
+per named frame).  SQLite is used purely as a disk-backed cache, index and
+sorter; frame membership, exclusions and all aggregates are computed in
+project code with exact Python integers — no SQL `OVER`, window extension or
+DataFrame window function.
+
+```bash
+distagg window run stream.jsonl stream.out.jsonl --declaration declaration.json
+```
+
+```json
+{
+  "partition_by": ["region"],
+  "order_by": "ts",
+  "value": "amount",
+  "lag_lead_k": 2,
+  "windows": {
+    "around":  {"mode": "ROWS",  "start": -1, "end": 1, "exclude": "none"},
+    "same_ts": {"mode": "RANGE", "start": 0,  "end": 0, "exclude": "group"}
+  }
+}
+```
+
+```python
+from distagg.windowing import WindowConfig, load_declaration, run_window_job
+
+stats = run_window_job(
+    "stream.jsonl", "stream.out.jsonl", load_declaration("declaration.json"),
+    WindowConfig(batch_size=1000, spill_threshold=512),
+)
+```
+
+Each frame emits `count_all`, `count_value`, `sum`, `min`, `max` (the last
+four ignore null values).  `RANGE` includes every row at each matching
+timestamp; `ROWS` cuts strictly by position; `exclude` is `none`, `current`
+or `group`.  Endpoint arithmetic never wraps past 64 bits, frames that fall
+fully outside a group are empty, and the destination is replaced atomically
+only after the whole job succeeds.  A worked hand example, the bounded-memory
+design (spillable monotonic deques, sliding row cache, near-linear passes) and
+the resource knobs are documented in [`docs/WINDOWING.md`](docs/WINDOWING.md)
+and demonstrated under `demo/windowing/`.
+
 ## Staging store (`distagg.staging`)
 
 Alongside the aggregation database, the package ships an **independent disk
@@ -323,12 +372,33 @@ The suite includes:
   commit, six writers racing on the same `seq`;
 * `tests/test_incrementality.py` — the same edit on 30 vs 3000 creatives reads
   the same number of rows, all from point/range index probes.
+* `tests/test_window_*.py` — strict JSONL/declaration validation, the hand
+  window example, randomized differential checks against an independent naive
+  interpreter (`tests/reference_window.py`), an external SQLite window-function
+  cross-check (64-bit-safe data), edge cases (null values, beyond-64-bit
+  integers, int64 timestamp limits, empty input) and atomic-output/CLI
+  failures;
+* `tools/window_stress.py` — long single-peer, whole-group-frame and
+  many-small-group stress runs at N and 2N, recording wall time, rows read and
+  peak RSS to show bounded memory and near-linear scaling.
 
 Independent differential run (also available as a test):
 
 ```bash
 python3 tools/crosscheck.py --seed 9 --transactions 40
 ```
+
+### Window demonstration
+
+```bash
+demo/windowing/run_demo.sh /tmp/window-demo
+```
+
+It runs the hand-computed example `(10,5), (10,null), (12,-2)` through the
+four packaged frames and prints the per-row `computed` objects, including the
+tie handling, `exclude=group` emptying the self frame, and a lag reference
+that legitimately points at a null value.  See `docs/WINDOWING.md` for the
+full semantics and the disk/bounded-memory design.
 
 ### Local-update demonstration
 
@@ -356,6 +426,9 @@ src/distagg/staging/  independent LSM staging store (wal, segment, manifest,
                       (importer, import_cli)
 src/distagg/copybook/ copybook-driven mainframe record decoder (parser,
                       compiler, decoder, cli)
+src/distagg/windowing/ offline row-level window processor (strict JSONL,
+                      declaration, codec, spillable deque, interval
+                      aggregator, disk-backed engine, cli)
 tests/                pytest suite + independent reference interpreters
 tests/test_staging_*.py, tests/reference_staging.py
                       staging store tests (unittest-compatible) + history model
@@ -363,13 +436,18 @@ tests/test_staging_import_*.py, tests/data/imports/
                       importer tests and deterministic TSV fixtures
 tests/test_copybook_*.py
                       copybook parser/decoder/record/CLI tests
+tests/test_window_*.py, tests/reference_window.py
+                      row-level window tests + independent naive interpreter
 demo/                 local-update demo, replay script, transaction files,
                       staging store demos (semantics, scale, fault injection)
                       and the batch TSV import demo
 demo/copybook/        ORDER-FEED sample copybook, selector config and the
                       independent byte-construction script for the demo data
+demo/windowing/       hand-computed window example, declaration and demo script
 tools/crosscheck.py   standalone random differential checker
+tools/window_stress.py bounded-memory / scaling driver for the window job
 docs/STAGED_STORE.md  staging store formats and fault model
 docs/IMPORTER.md      TSV correction importer: config, classification, resume
 docs/COPYBOOK.md      copybook subset, decoding semantics, commands and API
+docs/WINDOWING.md     row-level window semantics, disk layout and memory model
 ```

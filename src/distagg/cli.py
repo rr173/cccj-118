@@ -239,6 +239,10 @@ def main(argv=None) -> int:
 
     register_copybook(sub)
 
+    from .windowing.cli import register as register_window
+
+    register_window(sub)
+
     args = parser.parse_args(argv)
     try:
         return args.func(args)

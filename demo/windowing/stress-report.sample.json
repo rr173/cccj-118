@@ -1,0 +1,96 @@
+{
+  "shapes": {
+    "long_peer": [
+      {
+        "elapsed_seconds": 3.7221,
+        "peak_rss_kib": 24692,
+        "stdout": {
+          "groups": 1,
+          "output_path": "/tmp/win-stress-big/long_peer-60000.out.jsonl",
+          "rows_read": 60000,
+          "rows_written": 60000,
+          "windows": 3
+        },
+        "rows": 60000,
+        "input_bytes": 2384448
+      },
+      {
+        "elapsed_seconds": 7.6064,
+        "peak_rss_kib": 28892,
+        "stdout": {
+          "groups": 1,
+          "output_path": "/tmp/win-stress-big/long_peer-120000.out.jsonl",
+          "rows_read": 120000,
+          "rows_written": 120000,
+          "windows": 3
+        },
+        "rows": 120000,
+        "input_bytes": 4797175
+      }
+    ],
+    "whole_group": [
+      {
+        "elapsed_seconds": 6.0974,
+        "peak_rss_kib": 24876,
+        "stdout": {
+          "groups": 1,
+          "output_path": "/tmp/win-stress-big/whole_group-60000.out.jsonl",
+          "rows_read": 60000,
+          "rows_written": 60000,
+          "windows": 3
+        },
+        "rows": 60000,
+        "input_bytes": 2466847
+      },
+      {
+        "elapsed_seconds": 12.2552,
+        "peak_rss_kib": 29560,
+        "stdout": {
+          "groups": 1,
+          "output_path": "/tmp/win-stress-big/whole_group-120000.out.jsonl",
+          "rows_read": 120000,
+          "rows_written": 120000,
+          "windows": 3
+        },
+        "rows": 120000,
+        "input_bytes": 4964779
+      }
+    ],
+    "many_groups": [
+      {
+        "elapsed_seconds": 3.382,
+        "peak_rss_kib": 25220,
+        "stdout": {
+          "groups": 15000,
+          "output_path": "/tmp/win-stress-big/many_groups-60000.out.jsonl",
+          "rows_read": 60000,
+          "rows_written": 60000,
+          "windows": 3
+        },
+        "rows": 60000,
+        "input_bytes": 2712237
+      },
+      {
+        "elapsed_seconds": 6.3706,
+        "peak_rss_kib": 29920,
+        "stdout": {
+          "groups": 30000,
+          "output_path": "/tmp/win-stress-big/many_groups-120000.out.jsonl",
+          "rows_read": 120000,
+          "rows_written": 120000,
+          "windows": 3
+        },
+        "rows": 120000,
+        "input_bytes": 5522238
+      }
+    ]
+  },
+  "config": {
+    "rows": 60000,
+    "batch_size": 256,
+    "spill_threshold": 64,
+    "sqlite_cache_size_kib": 512,
+    "out_dir": "/tmp/win-stress-big"
+  },
+  "out_dir": "/tmp/win-stress-big"
+}
