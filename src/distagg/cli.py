@@ -235,6 +235,10 @@ def main(argv=None) -> int:
 
     register_staging(sub)
 
+    from .copybook.cli import register as register_copybook
+
+    register_copybook(sub)
+
     args = parser.parse_args(argv)
     try:
         return args.func(args)

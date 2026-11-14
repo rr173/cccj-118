@@ -152,6 +152,36 @@ success; `status` distinguishes a missing report from committed data
 batches.  See [docs/IMPORTER.md](docs/IMPORTER.md) and
 [demo/staging_import_demo.py](demo/staging_import_demo.py).
 
+### Copybook mainframe record decoder (`distagg copybook`)
+
+A separate offline entry point decodes production records exported from a
+mainframe: RDW-framed files of EBCDIC (cp037) text, packed COMP-3 and
+binary COMP quantities, and record layouts whose length varies with a
+count field.  A restricted COBOL copybook subset (01-49 levels, FILLER,
+`PIC X(n)` / `9(n)` / `[S]9(n)V9(m)`, `USAGE DISPLAY|COMP|COMP-3`, fixed
+and `DEPENDING ON` OCCURS, and config-selected REDEFINES branches) is
+compiled once into a reusable layout; anything outside the subset is
+rejected with the copybook line and field.  This entry point does layout
+compilation and byte decoding only — it does not reuse the supplier TSV
+importer's numbering, isolation or resume protocols.
+
+```bash
+distagg copybook check  order_record.cpy --select selectors.json   # layout report
+distagg copybook decode order_record.cpy orders.dat --select selectors.json
+```
+
+`check` prints every field with full path, type, fixed/variable span,
+OCCURS and REDEFINES relations, and honest dynamic offsets behind
+variable-length arrays.  `decode` streams the file record by record
+(constant memory) and prints one nested JSON object per line — groups stay
+objects, OCCURS stay arrays, FILLER is omitted, only the selected
+REDEFINES branch appears.  Bad records exit non-zero with record number,
+file byte offset, field path and reason on stderr; already-decoded lines
+stay emitted.  See [docs/COPYBOOK.md](docs/COPYBOOK.md) for the exact
+subset and semantics, and `demo/copybook_demo.py`,
+`demo/copybook_fault_demo.py`, `demo/copybook_stream_demo.py` for runnable
+demonstrations built on independently constructed demo bytes.
+
 ## Semantics in detail
 
 * `pairs` counts every matching (exposure copy, tag copy) pair.  A null cost
@@ -324,15 +354,22 @@ src/distagg/          package (validate, engine, db, api, cli, demo, stats)
 src/distagg/staging/  independent LSM staging store (wal, segment, manifest,
                       memtable, store, cli) plus the TSV correction importer
                       (importer, import_cli)
+src/distagg/copybook/ copybook-driven mainframe record decoder (parser,
+                      compiler, decoder, cli)
 tests/                pytest suite + independent reference interpreters
 tests/test_staging_*.py, tests/reference_staging.py
                       staging store tests (unittest-compatible) + history model
 tests/test_staging_import_*.py, tests/data/imports/
                       importer tests and deterministic TSV fixtures
+tests/test_copybook_*.py
+                      copybook parser/decoder/record/CLI tests
 demo/                 local-update demo, replay script, transaction files,
                       staging store demos (semantics, scale, fault injection)
                       and the batch TSV import demo
+demo/copybook/        ORDER-FEED sample copybook, selector config and the
+                      independent byte-construction script for the demo data
 tools/crosscheck.py   standalone random differential checker
 docs/STAGED_STORE.md  staging store formats and fault model
 docs/IMPORTER.md      TSV correction importer: config, classification, resume
+docs/COPYBOOK.md      copybook subset, decoding semantics, commands and API
 ```

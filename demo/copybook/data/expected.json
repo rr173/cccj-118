@@ -1,0 +1,195 @@
+{
+  "offsets": {
+    "file_length": 347,
+    "payload": {
+      "DETAIL-COUNT": 44,
+      "DETAIL-STRIDE": 23,
+      "DETAILS": 46,
+      "ORDER-BODY/EXTENDED-BODY": 34,
+      "ORDER-KIND": 33
+    },
+    "records": [
+      {
+        "TRAILER.ORDER-TOTAL_payload_offset": 46,
+        "file_offset": 0,
+        "payload_length": 58,
+        "rdw_length": 62
+      },
+      {
+        "TRAILER.ORDER-TOTAL_payload_offset": 161,
+        "file_offset": 62,
+        "payload_length": 173,
+        "rdw_length": 177
+      },
+      {
+        "TRAILER.ORDER-TOTAL_payload_offset": 92,
+        "file_offset": 239,
+        "payload_length": 104,
+        "rdw_length": 108
+      }
+    ]
+  },
+  "records": [
+    {
+      "AUDIT": {
+        "OPERATOR": "OP01",
+        "ORDER-ID": "ORD00001"
+      },
+      "DETAIL-COUNT": "0",
+      "DETAILS": [],
+      "HEADER": {
+        "CURRENCY": "USD",
+        "ORDER-DATE": "20240115",
+        "ORDER-ID": "ORD00001"
+      },
+      "ORDER-BODY": "STD-01",
+      "ORDER-KIND": "S",
+      "TRAILER": {
+        "ORDER-TOTAL": "0.00",
+        "ROUTING-CODE": [
+          "US",
+          "01",
+          "ZZ"
+        ],
+        "STATUS-FLAG": "N"
+      }
+    },
+    {
+      "AUDIT": {
+        "OPERATOR": "OP02",
+        "ORDER-ID": "ORD00002"
+      },
+      "DETAIL-COUNT": "5",
+      "DETAILS": [
+        {
+          "DISCOUNT": "-12.50",
+          "LINE-NO": "1",
+          "QTY": "2",
+          "SKU": "SKU001",
+          "TAGS": [
+            "A1",
+            "B2",
+            "C3"
+          ],
+          "UNIT-PRICE": "1234.56"
+        },
+        {
+          "DISCOUNT": "0.00",
+          "LINE-NO": "2",
+          "QTY": "1",
+          "SKU": "SKU002",
+          "TAGS": [
+            "X ",
+            " Y",
+            "ZZ"
+          ],
+          "UNIT-PRICE": "-0.05"
+        },
+        {
+          "DISCOUNT": "-999.99",
+          "LINE-NO": "3",
+          "QTY": "100",
+          "SKU": "SKU003",
+          "TAGS": [
+            "T1",
+            "T2",
+            "T3"
+          ],
+          "UNIT-PRICE": "99999.99"
+        },
+        {
+          "DISCOUNT": "0.10",
+          "LINE-NO": "4",
+          "QTY": "3",
+          "SKU": "SKU004",
+          "TAGS": [
+            "N ",
+            "E ",
+            "W "
+          ],
+          "UNIT-PRICE": "0.01"
+        },
+        {
+          "DISCOUNT": "-0.25",
+          "LINE-NO": "5",
+          "QTY": "7",
+          "SKU": "SKU005",
+          "TAGS": [
+            "L ",
+            "A ",
+            "S "
+          ],
+          "UNIT-PRICE": "55.50"
+        }
+      ],
+      "EXTENDED-BODY": {
+        "GIFT-FLAG": "Y",
+        "LOYALTY-ID": "LOY123456"
+      },
+      "HEADER": {
+        "CURRENCY": "EUR",
+        "ORDER-DATE": "20240116",
+        "ORDER-ID": "ORD00002"
+      },
+      "ORDER-KIND": "E",
+      "TRAILER": {
+        "ORDER-TOTAL": "6789.01",
+        "ROUTING-CODE": [
+          "EU",
+          "02",
+          "EX"
+        ],
+        "STATUS-FLAG": "R"
+      }
+    },
+    {
+      "AUDIT": {
+        "OPERATOR": "OP03",
+        "ORDER-ID": "ORD00003"
+      },
+      "DETAIL-COUNT": "2",
+      "DETAILS": [
+        {
+          "DISCOUNT": "0.00",
+          "LINE-NO": "1",
+          "QTY": "5",
+          "SKU": "SKU010",
+          "TAGS": [
+            "P ",
+            "Q ",
+            "R "
+          ],
+          "UNIT-PRICE": "10.00"
+        },
+        {
+          "DISCOUNT": "-1.25",
+          "LINE-NO": "2",
+          "QTY": "9",
+          "SKU": "SKU011",
+          "TAGS": [
+            "S ",
+            "T ",
+            "U "
+          ],
+          "UNIT-PRICE": "20.25"
+        }
+      ],
+      "HEADER": {
+        "CURRENCY": "GBP",
+        "ORDER-DATE": "20240117",
+        "ORDER-ID": "ORD00003"
+      },
+      "ORDER-BODY": "STD-03",
+      "ORDER-KIND": "S",
+      "TRAILER": {
+        "ORDER-TOTAL": "29.00",
+        "ROUTING-CODE": [
+          "GB",
+          "03",
+          "A\u0000"
+        ],
+        "STATUS-FLAG": "N"
+      }
+    }
+  ]
+}

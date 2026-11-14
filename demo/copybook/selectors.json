@@ -1,0 +1,11 @@
+{
+  "selectors": {
+    "ORDER-RECORD.ORDER-BODY": {
+      "using": "ORDER-RECORD.ORDER-KIND",
+      "map": {
+        "S": "ORDER-RECORD.ORDER-BODY",
+        "E": "ORDER-RECORD.EXTENDED-BODY"
+      }
+    }
+  }
+}
