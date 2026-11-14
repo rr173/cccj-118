@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "distagg"
+version = "0.1.0"
+description = "Incremental publisher x tag cost aggregation with reversible state, on SQLite"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [{name = "distagg"}]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Topic :: Database",
+    "Typing :: Typed",
+]
+
+[project.scripts]
+distagg = "distagg.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = ["distagg"]
+
+[tool.setuptools.package-data]
+distagg = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "tests"]
+filterwarnings = ["error::DeprecationWarning:distagg.*"]

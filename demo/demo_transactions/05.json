@@ -1,0 +1,39 @@
+{
+  "seq": 5,
+  "edits": [
+    {
+      "relation": "E",
+      "row": {
+        "publisher": "pub-b",
+        "creative": "cr-4",
+        "cost": null
+      },
+      "weight": 4
+    },
+    {
+      "relation": "T",
+      "row": {
+        "creative": "cr-4",
+        "tag": "clearance"
+      },
+      "weight": 2
+    },
+    {
+      "relation": "E",
+      "row": {
+        "publisher": "pub-b",
+        "creative": "cr-5",
+        "cost": 25
+      },
+      "weight": 1
+    },
+    {
+      "relation": "T",
+      "row": {
+        "creative": "cr-5",
+        "tag": "sale"
+      },
+      "weight": 1
+    }
+  ]
+}

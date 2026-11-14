@@ -1,0 +1,22 @@
+{
+  "seq": 2,
+  "edits": [
+    {
+      "relation": "E",
+      "row": {
+        "publisher": "pub-a",
+        "creative": "cr-1",
+        "cost": 10
+      },
+      "weight": -1
+    },
+    {
+      "relation": "T",
+      "row": {
+        "creative": "cr-1",
+        "tag": "sale"
+      },
+      "weight": -1
+    }
+  ]
+}
