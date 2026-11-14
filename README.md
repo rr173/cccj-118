@@ -125,6 +125,33 @@ fault model and the pause points used for kill tests, and
 `demo/staging_demo.py`, `demo/staging_scale_demo.py`,
 `demo/staging_fault_demo.py` for runnable demonstrations.
 
+### Batch TSV correction importer (`distagg staging import`)
+
+A local batch-import entry point sits on top of the staging store for the
+supplier-correction backfill.  It reads one UTF-8 TSV file (header row plus
+supplier, correction id, hex key and hex value columns), classifies every
+physical line, batches the acceptable corrections into the staging store,
+and isolates bad rows with their original bytes, relative path and line
+number — without touching the aggregation database or extending the
+store's key/value semantics.
+
+```bash
+distagg staging import precheck CONFIG.json corrections.tsv state/   # classify only
+distagg staging import run       CONFIG.json corrections.tsv store/ state/
+distagg staging import status    state/
+```
+
+It strictly distinguishes empty fields, the empty byte string (`0x`) and
+illegal hexadecimal; exact repeats of a correction id are duplicates while
+differing repeats make the whole id a conflict (no later value ever
+overwrites an earlier one).  Progress is durable per batch with the file
+fingerprint, physical line and counts, so an interrupted run resumes at a
+batch boundary, a re-run never double writes, and a changed file is refused
+rather than spliced onto old progress.  Report-write failures never report
+success; `status` distinguishes a missing report from committed data
+batches.  See [docs/IMPORTER.md](docs/IMPORTER.md) and
+[demo/staging_import_demo.py](demo/staging_import_demo.py).
+
 ## Semantics in detail
 
 * `pairs` counts every matching (exposure copy, tag copy) pair.  A null cost
@@ -295,12 +322,17 @@ the summary after each step.
 ```
 src/distagg/          package (validate, engine, db, api, cli, demo, stats)
 src/distagg/staging/  independent LSM staging store (wal, segment, manifest,
-                      memtable, store, cli)
+                      memtable, store, cli) plus the TSV correction importer
+                      (importer, import_cli)
 tests/                pytest suite + independent reference interpreters
 tests/test_staging_*.py, tests/reference_staging.py
                       staging store tests (unittest-compatible) + history model
+tests/test_staging_import_*.py, tests/data/imports/
+                      importer tests and deterministic TSV fixtures
 demo/                 local-update demo, replay script, transaction files,
                       staging store demos (semantics, scale, fault injection)
+                      and the batch TSV import demo
 tools/crosscheck.py   standalone random differential checker
 docs/STAGED_STORE.md  staging store formats and fault model
+docs/IMPORTER.md      TSV correction importer: config, classification, resume
 ```

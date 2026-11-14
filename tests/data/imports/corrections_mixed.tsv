@@ -1,0 +1,18 @@
+supplier	correction_id	key_hex	value_hex	note
+acme	C001	6162	6364	note-1
+acme	C002	0x	0x	empty-bytes
+acme	C003	6b	76	
+acme	C001	6162	6364	note-1
+acme	C004		01	empty-key
+acme	C005	abc	01	odd-key
+acme	C006	zz	01	bad-hex
+rival	C007	61	62	wrong-supplier
+acme	C008	6162	6	odd-value
+
+acme	C009	61	62
+acme	C002	0x	0x	empty-bytes
+acme	C010	64	65	conflict-a
+acme	C010	64	66	conflict-b
+acme	C011	66	67	
+acme	C012	68	69	
+acme	C013	6a	6b	

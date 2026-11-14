@@ -241,6 +241,23 @@ distagg staging stats   DIR
 All output is JSON.  `compact` prints before/after segment counts, record
 counts and bytes; `stats` prints the full file inventory.
 
+### Batch TSV correction importer
+
+`distagg staging import ...` is a separate entry point that feeds
+supplier-correction TSV files into this store without changing its
+key/value semantics.  It classifies every row (importable / duplicate /
+conflict / quarantined), writes importable rows as ordinary `put` batches
+of a configured size, records a fingerprinted, resumable batch ledger, and
+keeps the original bytes of isolated rows in a quarantine file.  It never
+opens the aggregation database.  See [IMPORTER.md](IMPORTER.md) for the
+configuration, reason codes, resume and report model.
+
+```bash
+distagg staging import precheck CONFIG.json corrections.tsv STATE_DIR
+distagg staging import run       CONFIG.json corrections.tsv DIR STATE_DIR
+distagg staging import status    STATE_DIR
+```
+
 ## Reproducible demos
 
 ```bash

@@ -1,0 +1,4 @@
+supplier	correction_id	key_hex	value_hex	note
+acme	U001	61	62	ok
+acme	U002	62	63	bad-ÿ-note
+acme	U003	63	64	recovered

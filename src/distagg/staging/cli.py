@@ -277,3 +277,7 @@ def register(sub) -> None:
     p = staging_sub.add_parser("stats", help="print store sizes, versions and file inventory")
     p.add_argument("dir")
     p.set_defaults(func=_run(_cmd_stats, read_only=True))
+
+    from .import_cli import register as register_import
+
+    register_import(staging_sub)
