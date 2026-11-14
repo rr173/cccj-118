@@ -231,6 +231,10 @@ def main(argv=None) -> int:
     p.add_argument("db")
     p.set_defaults(func=cmd_demo)
 
+    from .staging.cli import register as register_staging
+
+    register_staging(sub)
+
     args = parser.parse_args(argv)
     try:
         return args.func(args)

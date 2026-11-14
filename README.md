@@ -85,6 +85,46 @@ print(query_summary("analytics.db"))
 print(query_base("analytics.db"))
 ```
 
+## Staging store (`distagg.staging`)
+
+Alongside the aggregation database, the package ships an **independent disk
+staging store**: a small LSM storage engine (WAL + memtable + sorted
+segments with a sparse index, all self-encoded — no SQLite/dbm/etc.) for
+buffering arbitrary `bytes` key/value edits before handing them downstream
+in key order.  It does not extend the aggregation metrics and does not move
+the existing computation to a new backend.
+
+```bash
+distagg staging put     /tmp/staging 6b6579 76616c   # keys/values as hex
+distagg staging batch   /tmp/staging ops.json
+distagg staging get     /tmp/staging 6b6579 --stats
+distagg staging scan    /tmp/staging --lower 61 --upper 7a
+distagg staging flush   /tmp/staging
+distagg staging compact /tmp/staging
+distagg staging stats   /tmp/staging
+```
+
+```python
+from distagg.staging import StagingStore
+
+store = StagingStore.open("/tmp/staging", memtable_budget=1 << 20)
+commit = store.write_batch([("put", b"k", b"v1"), ("delete", b"gone")])
+snap = store.snapshot()              # pinned read-only view at `commit`
+store.put(b"k", b"v2")
+assert snap.get(b"k") == b"v1"       # unaffected by writes/flush/compact
+snap.close()
+store.close()
+```
+
+Multi-version snapshots and pinned scan iterators, an atomic batch WAL with
+checksums, explicit flush/compact with real reclamation numbers, single-writer
+locking across processes, and crash recovery that keeps confirmed batches,
+drops torn tails and refuses corrupted files.  See
+[docs/STAGED_STORE.md](docs/STAGED_STORE.md) for the file formats, the
+fault model and the pause points used for kill tests, and
+`demo/staging_demo.py`, `demo/staging_scale_demo.py`,
+`demo/staging_fault_demo.py` for runnable demonstrations.
+
 ## Semantics in detail
 
 * `pairs` counts every matching (exposure copy, tag copy) pair.  A null cost
@@ -253,8 +293,14 @@ the summary after each step.
 ## Layout
 
 ```
-src/distagg/         package (validate, engine, db, api, cli, demo, stats)
-tests/               pytest suite + independent reference interpreter
-demo/                local-update demo, replay script, transaction files
-tools/crosscheck.py  standalone random differential checker
+src/distagg/          package (validate, engine, db, api, cli, demo, stats)
+src/distagg/staging/  independent LSM staging store (wal, segment, manifest,
+                      memtable, store, cli)
+tests/                pytest suite + independent reference interpreters
+tests/test_staging_*.py, tests/reference_staging.py
+                      staging store tests (unittest-compatible) + history model
+demo/                 local-update demo, replay script, transaction files,
+                      staging store demos (semantics, scale, fault injection)
+tools/crosscheck.py   standalone random differential checker
+docs/STAGED_STORE.md  staging store formats and fault model
 ```
