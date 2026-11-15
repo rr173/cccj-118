@@ -31,6 +31,18 @@ from .errors import (
     SeqConflict,
     SequenceGap,
 )
+from .flow import (
+    FlowConfig,
+    FlowError,
+    FlowFailure,
+    FlowGraph,
+    FlowRun,
+    GraphError,
+    Record,
+    RunSummary,
+    load_graph,
+    start_run,
+)
 from .windowing import (
     WindowConfig,
     WindowDeclaration,
@@ -66,6 +78,17 @@ __all__ = [
     "WindowSpec",
     "load_declaration",
     "run_window_job",
+    # local asynchronous flow executor
+    "FlowConfig",
+    "FlowError",
+    "FlowFailure",
+    "FlowGraph",
+    "FlowRun",
+    "GraphError",
+    "Record",
+    "RunSummary",
+    "load_graph",
+    "start_run",
 ]
 
 __version__ = "0.1.0"

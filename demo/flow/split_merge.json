@@ -1,0 +1,23 @@
+{
+  "name": "supplier-split-merge",
+  "nodes": [
+    {"name": "in", "type": "source", "path": "imports.jsonl"},
+    {"name": "exceptions", "type": "select", "field": "status", "condition": "eq", "value": "error"},
+    {"name": "acceptable", "type": "select", "field": "status", "condition": "ne", "value": "error"},
+    {"name": "items", "type": "explode", "field": "items"},
+    {"name": "flattened", "type": "project", "fields": {"order_id": "id", "item": "items"}},
+    {"name": "merged", "type": "merge"},
+    {"name": "exception_report", "type": "sink", "path": "exceptions.jsonl"},
+    {"name": "ledger", "type": "sink", "path": "ledger.jsonl"}
+  ],
+  "edges": [
+    {"from": "in", "to": "exceptions"},
+    {"from": "in", "to": "acceptable"},
+    {"from": "exceptions", "to": "exception_report"},
+    {"from": "acceptable", "to": "items"},
+    {"from": "items", "to": "flattened"},
+    {"from": "flattened", "to": "merged"},
+    {"from": "exceptions", "to": "merged"},
+    {"from": "merged", "to": "ledger", "capacity": 2}
+  ]
+}

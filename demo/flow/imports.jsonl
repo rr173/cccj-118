@@ -1,0 +1,5 @@
+{"id": "A-1", "status": "ok", "nested": {"mark": "original"}, "items": [{"sku": "s1", "qty": 2}, {"sku": "s1", "qty": 2}]}
+{"id": "A-2", "status": "error", "nested": {"mark": "original"}, "items": []}
+{"id": "A-2", "status": "error", "nested": {"mark": "original"}, "items": [{"sku": "s3", "qty": null}]}
+{"id": "A-3", "status": "ok",   "nested": {"mark": "original"}, "items": [{"sku": "s4", "qty": 7}]}
+{"id": "A-4", "status": "hold", "nested": {"mark": "original"}, "items": [{"sku": "s5", "qty": 1}]}

@@ -231,6 +231,83 @@ subset and semantics, and `demo/copybook_demo.py`,
 `demo/copybook_fault_demo.py`, `demo/copybook_stream_demo.py` for runnable
 demonstrations built on independently constructed demo bytes.
 
+## Local asynchronous flow executor (`distagg flow`)
+
+A supplier file often has to feed two consumers at once: operations wants an
+exception detail list, the warehouse wants the exploded, acceptable sub-items,
+and some records must go to both.  `distagg flow` runs one finite graph over a
+UTF-8 JSONL file: the source reads each physical line exactly once, records
+flow through `select` / `project` / `explode` / `merge` operators as they
+arrive, and several sinks are written in the same run.  It is a self-contained
+asyncio executor with fixed-capacity channels — no external stream engine, no
+rereading the input per branch, no unbounded buffering.
+
+```bash
+distagg flow check graph.json
+distagg flow run   graph.json --results /tmp/flow-run-1 --capacity 2 --max-inflight 2
+```
+
+```json
+{
+  "nodes": [
+    {"name": "in",         "type": "source",  "path": "imports.jsonl"},
+    {"name": "exceptions", "type": "select",  "field": "status", "condition": "eq", "value": "error"},
+    {"name": "acceptable", "type": "select",  "field": "status", "condition": "ne", "value": "error"},
+    {"name": "items",      "type": "explode", "field": "items"},
+    {"name": "flattened",  "type": "project", "fields": {"order_id": "id", "item": "items"}},
+    {"name": "merged",     "type": "merge"},
+    {"name": "exception_report", "type": "sink", "path": "exceptions.jsonl"},
+    {"name": "ledger",           "type": "sink", "path": "ledger.jsonl"}
+  ],
+  "edges": [
+    {"from": "in", "to": "exceptions"}, {"from": "in", "to": "acceptable"},
+    {"from": "exceptions", "to": "exception_report"},
+    {"from": "acceptable", "to": "items"}, {"from": "items", "to": "flattened"},
+    {"from": "flattened", "to": "merged"}, {"from": "exceptions", "to": "merged"},
+    {"from": "merged", "to": "ledger", "capacity": 2}
+  ]
+}
+```
+
+Every output line carries `{"identity": {"source", "line", "expansion_path"},
+"row": ...}`.  The identity is the source name, the physical 1-based line and
+the 0-based index appended by each `explode`; a business key is never
+substituted, and `merge` never de-duplicates — a line that arrives over two
+paths is delivered twice.  Several edges out of one node are a broadcast (each
+successor gets an independent copy), not a work split.
+
+The graph is validated in full before any source is opened or any output
+directory is created: duplicate names, dangling or duplicate edges, cycles,
+wrong input counts (`merge` needs two, everything else one; sources and sinks
+have none), and nodes that cannot reach a sink are all rejected.  At runtime
+each edge is a fixed-capacity channel and each node has a bounded in-flight
+allowance, so a slow sink stalls its producers and eventually the source
+within a bound fixed at start-up (Σ edge capacities + per-node in-flight
+allowance + result buffer).  The summary reports real per-edge `sent`,
+`received` and `peak_occupancy`, the source's actual `lines_pulled`, per-sink
+counts and whether each sink is complete.  The first operator/source/sink
+failure stops the whole run, keeps the original node and record identity, and
+wakes tasks blocked on full or empty queues; cancellation and Ctrl-C follow
+the same cooperative cleanup.  Every execution uses a fresh result directory.
+
+```python
+from distagg.flow import FlowGraph, FlowConfig, load_graph, start_run
+
+graph = load_graph("graph.json")
+async with start_run(graph, FlowConfig("/tmp/flow-run-1")) as run:
+    summary = await run.wait()
+assert summary.ok, summary.error
+```
+
+The Python API additionally accepts caller-supplied co-operative async
+one-to-many operators (`graph.custom(name, async_fn)`); a graph file never
+loads code.  See [docs/FLOW.md](docs/FLOW.md) for the full format, operator
+semantics, failure protocol, memory model and measured scale figures, and
+`demo/flow/flow_demo.py` for the narrated, asserted demonstration (split and
+merge of a messy supplier file with hand-listed identities, broadcast
+isolation, paused sinks at capacity 1 and 2, empty inputs, differing source
+speeds, operator/sink faults and cancellation).
+
 ## Semantics in detail
 
 * `pairs` counts every matching (exposure copy, tag copy) pair.  A null cost
@@ -444,10 +521,16 @@ demo/                 local-update demo, replay script, transaction files,
 demo/copybook/        ORDER-FEED sample copybook, selector config and the
                       independent byte-construction script for the demo data
 demo/windowing/       hand-computed window example, declaration and demo script
+src/distagg/flow/     local asynchronous flow executor (graph format, strict
+                      JSONL, bounded channels, operators, merge, sinks, cli)
+demo/flow/            split/merge demo data, graph and asserted walkthrough
 tools/crosscheck.py   standalone random differential checker
 tools/window_stress.py bounded-memory / scaling driver for the window job
+tools/flow_stress.py  bounded-memory / scaling driver for the flow executor
 docs/STAGED_STORE.md  staging store formats and fault model
 docs/IMPORTER.md      TSV correction importer: config, classification, resume
 docs/COPYBOOK.md      copybook subset, decoding semantics, commands and API
 docs/WINDOWING.md     row-level window semantics, disk layout and memory model
+docs/FLOW.md          flow graph format, operator semantics, fault protocol and
+                      memory model
 ```

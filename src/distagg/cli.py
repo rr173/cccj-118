@@ -243,6 +243,10 @@ def main(argv=None) -> int:
 
     register_window(sub)
 
+    from .flow.cli import register as register_flow
+
+    register_flow(sub)
+
     args = parser.parse_args(argv)
     try:
         return args.func(args)
