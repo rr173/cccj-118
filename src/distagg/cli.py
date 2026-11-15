@@ -247,6 +247,10 @@ def main(argv=None) -> int:
 
     register_flow(sub)
 
+    from .lexicon.cli import register as register_lexicon
+
+    register_lexicon(sub)
+
     args = parser.parse_args(argv)
     try:
         return args.func(args)

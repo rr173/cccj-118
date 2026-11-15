@@ -308,6 +308,55 @@ merge of a messy supplier file with hand-listed identities, broadcast
 isolation, paused sinks at capacity 1 and 2, empty inputs, differing source
 speeds, operator/sink faults and cancellation).
 
+## Controlled-vocabulary annotation (`distagg lexicon`)
+
+Supplier remarks mention the same material under short names, old names and
+mixed case.  `distagg lexicon` keeps the original text untouched and marks
+every mention with a unified term id: a maintainer compiles a dictionary of
+aliases into a read-only SQLite matching library, and an integrator scans a
+remark JSONL file with that library to get the hit positions and the chosen
+terms.  It is batch standardisation from a dictionary to business text — no
+model inference, no rewriting of the original.
+
+```bash
+distagg lexicon compile dictionary.jsonl terms.sqlite
+distagg lexicon check   terms.sqlite
+distagg lexicon scan    terms.sqlite remarks.jsonl out.jsonl --mode resolved
+```
+
+```python
+from distagg.lexicon import compile_dictionary, scan_remarks
+
+compile_dictionary("dictionary.jsonl", "terms.sqlite")
+stats = scan_remarks("terms.sqlite", "remarks.jsonl", "out.jsonl", mode="all")
+```
+
+Each dictionary line gives a unique `term_id`, an integer `priority`
+(booleans rejected) and a non-empty `aliases` array of
+`{"text", "boundary"}` (`any` or `ascii_word`); the same alias text may
+appear under several terms and nothing is dropped for name-sharing.
+Matching folds both sides identically (per-character `casefold`, then each
+whitespace run becomes one space) and reports half-open intervals in
+Unicode characters of the *original* text — `strasse` matches `Straße`
+(slice `Straße`), `ss` matches `ß`, a single `s` never matches inside `ß`,
+and `ascii_word` only treats ASCII letters/digits/`_` as word characters
+(Chinese neighbours do not block a hit).  `all` returns every candidate
+(sorted by start, end, term id, alias index); `resolved` greedily keeps
+non-overlapping mentions (leftmost start, longest span, then priority,
+term id, alias index; adjacent hits allowed).
+
+The matcher is a self-contained Aho–Corasick automaton stored in SQLite
+(states, transitions, failure links, output links — one output row per
+alias, inheritance via output-link chains, no copied hit lists).  Compile
+and scan stream through fixed-capacity LRU caches: neither the trie, the
+failure links nor the dictionary is ever mirrored in Python objects, and
+the corpus size is never part of the scan's memory bound.  Compile refuses
+to overwrite and never leaves a half-built openable library; scan publishes
+its result atomically only after the last input line is read.  See
+[docs/LEXICON.md](docs/LEXICON.md) for the full contract and
+`demo/lexicon_demo.py`, `demo/lexicon_scale_demo.py` (105k aliases, real
+timings/RSS) for the asserted demonstrations.
+
 ## Semantics in detail
 
 * `pairs` counts every matching (exposure copy, tag copy) pair.  A null cost
@@ -458,6 +507,12 @@ The suite includes:
 * `tools/window_stress.py` — long single-peer, whole-group-frame and
   many-small-group stress runs at N and 2N, recording wall time, rows read and
   peak RSS to show bounded memory and near-linear scaling.
+* `tests/test_lexicon_*.py` — folding/mapping unit tests, strict dictionary
+  validation, hand-computed matching cases (Straße/ß, whitespace runs,
+  ASCII-word boundaries, adjacency, empty remarks), randomized differential
+  checks against `tests/reference_lexicon.py` (an independent per-position
+  enumerator), library integrity and shuffle invariance, CLI failure
+  protocols, and a moderate-scale bounded-memory test.
 
 Independent differential run (also available as a test):
 
@@ -515,14 +570,25 @@ tests/test_copybook_*.py
                       copybook parser/decoder/record/CLI tests
 tests/test_window_*.py, tests/reference_window.py
                       row-level window tests + independent naive interpreter
+tests/test_lexicon_*.py, tests/reference_lexicon.py
+                      lexicon tests (folding, dictionary validation, hand
+                      cases, CLI/faults, scale) + independent per-position
+                      reference implementation
 demo/                 local-update demo, replay script, transaction files,
                       staging store demos (semantics, scale, fault injection)
                       and the batch TSV import demo
+demo/lexicon_demo.py, demo/lexicon_scale_demo.py
+                      lexicon semantics demo (hand-checked, reference
+                      cross-check, process isolation, faults) and the
+                      105k-alias scale demo
 demo/copybook/        ORDER-FEED sample copybook, selector config and the
                       independent byte-construction script for the demo data
 demo/windowing/       hand-computed window example, declaration and demo script
 src/distagg/flow/     local asynchronous flow executor (graph format, strict
                       JSONL, bounded channels, operators, merge, sinks, cli)
+src/distagg/lexicon/  controlled-vocabulary annotation (strict dictionary
+                      JSONL, disk-based Aho-Corasick compiler, read-only
+                      library, bounded-cache scanner, cli)
 demo/flow/            split/merge demo data, graph and asserted walkthrough
 tools/crosscheck.py   standalone random differential checker
 tools/window_stress.py bounded-memory / scaling driver for the window job
@@ -533,4 +599,6 @@ docs/COPYBOOK.md      copybook subset, decoding semantics, commands and API
 docs/WINDOWING.md     row-level window semantics, disk layout and memory model
 docs/FLOW.md          flow graph format, operator semantics, fault protocol and
                       memory model
+docs/LEXICON.md       lexicon dictionary format, matching conventions,
+                      selection rules, memory model and failure protocol
 ```
