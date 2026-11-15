@@ -251,6 +251,10 @@ def main(argv=None) -> int:
 
     register_lexicon(sub)
 
+    from .workbook.cli import register as register_workbook
+
+    register_workbook(sub)
+
     args = parser.parse_args(argv)
     try:
         return args.func(args)

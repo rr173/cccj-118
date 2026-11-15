@@ -357,6 +357,70 @@ its result atomically only after the last input line is read.  See
 `demo/lexicon_demo.py`, `demo/lexicon_scale_demo.py` (105k aliases, real
 timings/RSS) for the asserted demonstrations.
 
+## Offline XLSX recalculation handover (`distagg workbook`)
+
+A supplier's cost sheet arrives as an offline `.xlsx` whose amount cells are
+formulas referencing other sheets; the cached results saved in the file may
+be last month's numbers or absent.  `distagg workbook` recomputes the rows a
+recipe selects from the raw OOXML values and formula text with an evaluator
+implemented in this package, and writes one verifiable JSONL row per data
+row.  It never starts Excel/LibreOffice or an external calculation service,
+never writes back to the source, and never uses a cached `<v>` as a fallback.
+
+```bash
+distagg workbook check  BOOK.xlsx RECIPE.json
+distagg workbook recalc BOOK.xlsx RECIPE.json OUTPUT.jsonl \
+    [--mode strict|annotate] [--cell-budget N] [--max-formula-cells N]
+```
+
+```python
+from distagg.workbook import RecalcConfig, check_workbook, run_recalc_job
+
+stats = run_recalc_job("supplier_cost.xlsx", "recipe.json", "rows.jsonl",
+                       RecalcConfig(mode="annotate"))
+```
+
+A recipe names sheets, inclusive row bands and an ordered mapping of target
+field name to column letter.  Each output row keeps the worksheet name and
+original row number; each field has `value` or `error`, the original cell
+address and its literal or formula.  Blank cells are `status: "blank"` with
+no `value` key (never confused with `""`), and empty rows in the band are
+still emitted.  Unknown sheets, illegal bands and duplicate target fields are
+rejected before any output is opened; there is no header guessing and no
+automatic skipping of hidden rows or columns.
+
+Parts are found through the real OOXML relationship graph, not by guessing
+`sheet1.xml`.  Shared/inline strings, numbers, booleans, empty strings and
+error cells are supported; numbers become `Decimal` directly from XML text,
+and style-based dates are deliberately left as raw serial numbers.  Merged
+cells yield a value only at their top-left anchor.  Relationship targets that
+escape the package or are external URIs are refused, and missing parts,
+broken XML or duplicate cell coordinates are explicit input faults.
+
+Formulas are limited to a documented subset -- decimal numbers, quoted text,
+booleans, parentheses, unary `+`/`-`, `+ - * /`, comparisons, A1/`$A$1`
+references, same-sheet/qualified/rectangular references, and `SUM`, `MIN`,
+`MAX`, `COUNT`, `IF`, `IFERROR` -- evaluated with `Decimal` precision 34 and
+`ROUND_HALF_EVEN`.  Everything else (external workbooks, defined names,
+array formulas, structured references, volatile functions, `&`, whole-column
+ranges) is refused with the cell and construct.  Shared formulas translate
+relative references per member regardless of XML element order; members are
+never handed the master's value.  Dependencies are checked up front for
+cycles (even in unselected `IF` branches) but evaluated lazily, with an
+explicit work list rather than recursion and a memo shared across rows plus a
+configurable cell-access budget.  `strict` mode stops at the first error
+field and publishes no file; `annotate` delivers every row with typed errors
+and a summary that separates ok/blank/error fields.
+
+The worked demo (`demo/workbook/`) recomputes a supplier cost sheet whose
+formulas include a deliberately stale cache, a missing cache, a shared
+formula with a master after its members, a zero quantity, a blank discount
+and a deliberate `#DIV/0!`; it asserts hand-computed totals, shows strict vs
+annotate, and records real evaluation counts and peak RSS for a 5000-deep
+chain and a wide fan-in.  See [docs/WORKBOOK.md](docs/WORKBOOK.md) for the
+full recipe/JSONL contract and formula semantics, and `run_demo.sh` for the
+reproducible commands.
+
 ## Semantics in detail
 
 * `pairs` counts every matching (exposure copy, tag copy) pair.  A null cost

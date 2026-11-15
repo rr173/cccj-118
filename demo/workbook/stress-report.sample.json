@@ -1,0 +1,27 @@
+{
+  "cases": [
+    {
+      "cell_accesses": 5000,
+      "elapsed_seconds": 0.289,
+      "formula_evaluations": 4999,
+      "output_path": "/tmp/wb-report/deep.jsonl",
+      "peak_child_rss_kib": 40796,
+      "recursion_limit": 120,
+      "rows_written": 1,
+      "shape": "deep",
+      "workbook_bytes": 39825
+    },
+    {
+      "cell_accesses": 10001,
+      "elapsed_seconds": 0.271,
+      "formula_evaluations": 5001,
+      "output_path": "/tmp/wb-report/fan_in.jsonl",
+      "peak_child_rss_kib": 38420,
+      "recursion_limit": 120,
+      "rows_written": 5000,
+      "shape": "fan_in",
+      "workbook_bytes": 38765
+    }
+  ],
+  "rows": 5000
+}

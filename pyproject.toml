@@ -21,7 +21,7 @@ distagg = "distagg.cli:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
-packages = ["distagg", "distagg.staging", "distagg.copybook", "distagg.windowing", "distagg.flow", "distagg.lexicon"]
+packages = ["distagg", "distagg.staging", "distagg.copybook", "distagg.windowing", "distagg.flow", "distagg.lexicon", "distagg.workbook"]
 
 [tool.setuptools.package-data]
 distagg = ["py.typed"]

@@ -1,0 +1,57 @@
+{
+  "note": "Hand-derived expectations for demo/workbook/supplier_cost.xlsx. 'total' is unit_cost * quantity * (1 - discount) * (1 + 0.13); a blank discount is 0. Values are written as they must appear in the JSONL (plain decimal strings of the exact 34-digit-context result).",
+  "tax_rate": "0.13",
+  "rows": [
+    {
+      "sheet": "Costs", "row": 2, "part": "P-100",
+      "unit_cost": "10", "quantity": "2", "discount": "0.1",
+      "total": "20.340",
+      "why": "10*2*0.9*1.13 = 20.34; the workbook's cached <v>999999</v> must be ignored"
+    },
+    {
+      "sheet": "Costs", "row": 3, "part": "P-101",
+      "unit_cost": "5", "quantity": "3", "discount": "0.2",
+      "total": "13.560",
+      "why": "5*3*0.8*1.13 = 13.56; the formula has no cached <v> at all"
+    },
+    {
+      "sheet": "Costs", "row": 4, "part": "P-102",
+      "unit_cost": "7", "quantity": "2", "discount": "0.05",
+      "total": "15.0290",
+      "why": "7*2*0.95*1.13 = 15.029; shared member, stale cache 0 is ignored"
+    },
+    {
+      "sheet": "Costs", "row": 5, "part": "P-103",
+      "unit_cost": "3", "quantity": "4", "discount": "0.5",
+      "total": "6.780",
+      "why": "3*4*0.5*1.13 = 6.78; shared member, stale cache 999 is ignored"
+    },
+    {
+      "sheet": "Costs", "row": 6, "part": "P-104",
+      "unit_cost": "12", "quantity": "1", "discount": null,
+      "total": "13.56",
+      "why": "12*1*1*1.13 = 13.56; blank discount acts as 0; this is the shared master, which appears in the XML after its members"
+    },
+    {
+      "sheet": "Costs", "row": 7, "part": "P-105",
+      "quantity": "9", "discount": "0", "total": "0",
+      "why": "0*9*1*1.13 = 0 despite the cached 77"
+    },
+    {
+      "sheet": "Costs", "row": 8, "part": "P-106",
+      "quantity": "5", "discount": null, "total": "22.60",
+      "why": "4*5*(1-blank)*1.13 = 22.6; the D8 cell does not exist"
+    },
+    {
+      "sheet": "Costs", "row": 9, "part": "P-107",
+      "quantity": "5", "discount": "0", "total": null,
+      "error": "#DIV/0!",
+      "why": "B9/(C9-C9)*... divides by zero"
+    },
+    {
+      "sheet": "Tax Rates", "row": 2,
+      "rate_label": "VAT", "tax_rate": "0.13",
+      "why": "the tax rate is read from a sheet whose name contains a space"
+    }
+  ]
+}

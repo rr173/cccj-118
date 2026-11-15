@@ -43,6 +43,22 @@ from .flow import (
     load_graph,
     start_run,
 )
+from .workbook import (
+    RecalcConfig,
+    RecalcStats,
+    Recipe,
+    RecipeError,
+    WorkbookBudgetExceeded,
+    WorkbookCycle,
+    WorkbookError,
+    WorkbookFormulaError,
+    WorkbookPackageError,
+    WorkbookStrictStop,
+    WorkbookUnsupported,
+    check_workbook,
+    load_recipe,
+    run_recalc_job,
+)
 from .windowing import (
     WindowConfig,
     WindowDeclaration,
@@ -89,6 +105,21 @@ __all__ = [
     "RunSummary",
     "load_graph",
     "start_run",
+    # offline XLSX recalculation handover
+    "RecalcConfig",
+    "RecalcStats",
+    "Recipe",
+    "RecipeError",
+    "WorkbookBudgetExceeded",
+    "WorkbookCycle",
+    "WorkbookError",
+    "WorkbookFormulaError",
+    "WorkbookPackageError",
+    "WorkbookStrictStop",
+    "WorkbookUnsupported",
+    "check_workbook",
+    "load_recipe",
+    "run_recalc_job",
 ]
 
 __version__ = "0.1.0"
